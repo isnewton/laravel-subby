@@ -122,13 +122,13 @@ trait HasSubscriptions
      * @return \Illuminate\Database\Eloquent\Model
      * @throws \Exception
      */
-    public function newSubscription(?string $tag, Plan|PlanCombination $planCombination, ?string $name = null, ?string $description = null, ?Carbon $startDate = null, $paymentMethod = 'free')
+    public function newSubscription(?string $tag, Plan|PlanCombination $planCombination, ?string $name = null, ?string $description = null, ?Carbon $startDate = null, $paymentMethod = 'free' , ?Carbon $customEndDate = null)
     {
         $tag = $tag ?? config('subby.main_subscription_tag');
 
         $plan = ($planCombination instanceof PlanCombination) ? $planCombination->plan : $planCombination;
 
-        $subscriptionPeriod = new SubscriptionPeriod($planCombination, $startDate ?? now());
+        $subscriptionPeriod = new SubscriptionPeriod($planCombination, $startDate ?? now() , $customEndDate);
 
         try {
             $this->subscription($tag);
