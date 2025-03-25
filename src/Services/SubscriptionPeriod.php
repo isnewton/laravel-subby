@@ -23,11 +23,13 @@ class SubscriptionPeriod
 
     protected $plan;
     protected $startDate;
+    protected $customeEndDate = null;
 
-    public function __construct(Plan|PlanCombination $plan, Carbon $startDate)
+    public function __construct(Plan|PlanCombination $plan, Carbon $startDate , Carbon $customeEndDate = null)
     {
         $this->plan = $plan;
         $this->startDate = $startDate;
+        $this->customeEndDate = $customeEndDate;
 
         if ($this->plan->trial_period > 0) {
             $this->setTrialPeriod();
@@ -82,6 +84,6 @@ class SubscriptionPeriod
     {
         $period = new Period($this->plan->invoice_interval, $this->plan->invoice_period, $this->startDate);
         $this->start = $period->getStartDate();
-        $this->end = $period->getEndDate();
+        $this->end = $this->customeEndDate ?? $period->getEndDate();
     }
 }
