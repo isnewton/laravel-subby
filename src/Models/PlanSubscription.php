@@ -448,15 +448,12 @@ class PlanSubscription extends Model
             // 1. Period was ended sometime ago : Set start to now and end date to provided
             // 2. Period is ongoing: Add days to end date
 
+
             if ($this->hasEnded()) {
                 $this->starts_at = Carbon::now();
-
-                $difference = $this->ends_at->diffInDays($endDate);
-
-                $this->ends_at = Carbon::now()->addDays($difference);
-            } else {
-                $this->ends_at = $endDate;
             }
+
+            $this->ends_at = $endDate;
 
             $this->save();
         });
