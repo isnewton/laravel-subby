@@ -450,11 +450,13 @@ class PlanSubscription extends Model
 
             if ($this->hasEnded()) {
                 $this->starts_at = Carbon::now();
+
+                $difference = $this->ends_at->diffInDays($endDate);
+
+                $this->ends_at = Carbon::now()->addDays($difference);
+            } else {
+                $this->ends_at = $endDate;
             }
-
-            $difference = $this->ends_at->diffInDays($endDate);
-
-            $this->ends_at = Carbon::now()->addDays($difference);
 
             $this->save();
         });
