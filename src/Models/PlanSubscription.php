@@ -7,6 +7,7 @@ namespace Bpuig\Subby\Models;
 use BadMethodCallException;
 use Bpuig\Subby\Exceptions\UsageDenied;
 use Bpuig\Subby\Services\Period;
+use Bpuig\Subby\Services\SubscriptionPeriod;
 use Bpuig\Subby\Traits\BelongsToPlan;
 use Bpuig\Subby\Traits\HasFeatures;
 use Bpuig\Subby\Traits\HasGracePeriod;
@@ -358,7 +359,8 @@ class PlanSubscription extends Model
                     'resettable_period' => $planFeature->resettable_period,
                     'resettable_interval' => $planFeature->resettable_interval,
                     'sort_order' => $planFeature->sort_order,
-                ]);
+                ]
+            );
         }
     }
 
@@ -410,6 +412,47 @@ class PlanSubscription extends Model
                 if ($this->hasEnded()) $this->starts_at = $period->getStartDate();
                 $this->ends_at = $period->getEndDate();
             }
+
+            $this->save();
+        });
+
+        return $this;
+    }
+
+    /**
+     * Renew subscription period.
+     *
+     * @param int $periods Number of periods to renew
+     * @return $this
+     * @throws \Exception
+     */
+    public function extendTo(Carbon $endDate): PlanSubscription
+    {
+        if ($this->isCanceled()) {
+            throw new LogicException('Unable to extend canceled subscription.');
+        }
+
+        DB::transaction(function () use ($endDate) {
+            // End trial
+            if ($this->isOnTrial()) {
+                $this->trial_ends_at = Carbon::now();
+            }
+
+            $isNew = !$this->starts_at; // Has never started subscription, so is new
+
+            if ($isNew) {
+                throw new LogicException('Unable to extend new subscription.');
+            }
+
+            //  There are two options about extending
+            // 1. Period was ended sometime ago : Set start to now and end date to provided
+            // 2. Period is ongoing: Add days to end date
+
+            if ($this->hasEnded()) {
+                $this->starts_at = Carbon::now();
+            }
+
+            $this->ends_at = $endDate;
 
             $this->save();
         });
