@@ -426,13 +426,17 @@ class PlanSubscription extends Model
      * @return $this
      * @throws \Exception
      */
-    public function extendTo(Carbon $endDate): PlanSubscription
+    public function extendTo(Carbon $endDate, Carbon $startDate = null): PlanSubscription
     {
         if ($this->isCanceled()) {
             throw new LogicException('Unable to extend canceled subscription.');
         }
 
-        DB::transaction(function () use ($endDate) {
+        if ($startDate && $startDate->gte($endDate)) {
+            throw new LogicException('Start date must be before end date.');
+        }
+
+        DB::transaction(function () use ($endDate, $startDate) {
             // End trial
             if ($this->isOnTrial()) {
                 $this->trial_ends_at = Carbon::now();
@@ -453,6 +457,9 @@ class PlanSubscription extends Model
                 $this->starts_at = Carbon::now();
             }
 
+            if ($startDate) {
+                $this->starts_at = $startDate;
+            }
             $this->ends_at = $endDate;
 
             $this->save();
